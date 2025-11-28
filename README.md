@@ -6,7 +6,7 @@
 
 (RU) Переключить язык:
 
-[![Static Badge](https://img.shields.io/badge/lang-en-orange)](#weatherpet-1)
+[![Static Badge](https://img.shields.io/badge/lang-en-orange)](#randomuser-1)
 
 ## Визуал
 ### Главный экран
@@ -56,7 +56,7 @@
 
 (EN) Switch language:
 
-[![Static Badge](https://img.shields.io/badge/lang-ru-orange)](#weatherpet)
+[![Static Badge](https://img.shields.io/badge/lang-ru-orange)](#randomuser)
 
 ## Visuals
 ### Main screen
