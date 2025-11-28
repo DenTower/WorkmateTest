@@ -6,11 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.workmatetest.presentation.MainScreen
+import com.example.workmatetest.presentation.ProfileScreen
 import com.example.workmatetest.presentation.UserViewModel
 import com.example.workmatetest.presentation.UsersScreen
 import com.example.workmatetest.ui.theme.WorkmateTestTheme
@@ -46,8 +49,28 @@ class MainActivity: ComponentActivity() {
                             val viewModel: UserViewModel = hiltViewModel(parentEntry)
 
                             UsersScreen(
-                                onNavigateUp = { navController.navigateUp() },
+                                onNavigateUp = navController::navigateUp,
+                                onNavigate = navController::navigate,
                                 viewModel = viewModel
+                            )
+                        }
+
+                        composable(
+                            route = "profile_screen/{user_index}",
+                            arguments = listOf(
+                                navArgument(name = "user_index") { type = NavType.IntType }
+                            )
+                        ) { backStackEntry ->
+                            val userIndex = backStackEntry.arguments?.getInt("user_index")!!
+
+                            val parentEntry = remember(backStackEntry) {
+                                navController.getBackStackEntry("main_screen")
+                            }
+                            val viewModel: UserViewModel = hiltViewModel(parentEntry)
+
+                            ProfileScreen(
+                                onNavigateUp = navController::navigateUp,
+                                user = viewModel.state.value.users[userIndex]
                             )
                         }
                     }

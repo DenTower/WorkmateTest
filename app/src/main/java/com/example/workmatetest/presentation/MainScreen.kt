@@ -1,6 +1,7 @@
 package com.example.workmatetest.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,89 +10,97 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.workmatetest.COUNTRIES
 import com.example.workmatetest.GENDERS
-import com.example.workmatetest.NATIONALITIES
 
 @Composable
 fun MainScreen(
     onNavigate: (String) -> Unit,
     viewModel: UserViewModel
 ) {
+    val state = viewModel.state.collectAsState()
+
     Scaffold(
         modifier = Modifier.background(MaterialTheme.colorScheme.background),
         topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(8.dp)
-            ) {
-                Text(
-                    text = "Generate User",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }) { paddingValues ->
+            CustomHeader("Generate User")
+        }
+    ) { paddingValues ->
+        val scrollState = rememberScrollState()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            var selectedGender: String? by remember { mutableStateOf(null) }
-            var selectedNationality: String? by remember { mutableStateOf(null) }
+            val generationParams = state.value.generationParams
+            var selectedGender: String? by remember { mutableStateOf(generationParams.gender) }
+            var selectedNationality: String? by remember { mutableStateOf(generationParams.nationality) }
 
             Column {
-                ParameterSelection(
+                ParameterSelectorCard(
                     title = "Select gender",
-                    selectableItems = GENDERS,
+                    items = GENDERS,
                     selected = selectedGender,
-                    onSelected = { selectedGender = it }
+                    onSelect = { selectedGender = it }
                 )
-                ParameterSelection(
+                ParameterSelectorCard(
                     title = "Select nationality",
-                    selectableItems = NATIONALITIES,
+                    items = COUNTRIES.map { it.name },
                     selected = selectedNationality,
-                    onSelected = { selectedNationality = it }
+                    onSelect = { selectedNationality = it }
                 )
+                ResetButton(modifier = Modifier.align(Alignment.End)) {
+                    selectedGender = null
+                    selectedNationality = null
+                }
             }
+            val usersSize = state.value.users.size
 
             Column {
                 Button(
-                    onClick = {
-                        onNavigate("users_screen")
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = { onNavigate("users_screen") },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = usersSize > 0
                 ) {
-                    Text(text = "Show Users")
+                    Text(
+                        text = "Show Users ($usersSize)",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                 }
 
                 Button(
@@ -100,10 +109,16 @@ fun MainScreen(
                             gender = selectedGender,
                             nationality = selectedNationality
                         )
+                        onNavigate("users_screen")
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = "Generate")
+                    Text(
+                        text = "Generate",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                 }
             }
         }
@@ -111,57 +126,88 @@ fun MainScreen(
 }
 
 @Composable
-fun ParameterSelection(
+fun ParameterSelectorCard(
     title: String,
-    selectableItems: List<String>,
     selected: String?,
-    onSelected: (String) -> Unit
+    items: List<String>,
+    onSelect: (String) -> Unit
 ) {
-    var dialogOpen by remember { mutableStateOf(false) }
-
-    if(dialogOpen) {
-        AlertDialog(onDismissRequest = { dialogOpen = false }, text = {
-            LazyColumn(modifier = Modifier.padding()) {
-                items(selectableItems) { item ->
-                    Text(
-                        item, modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onSelected(item)
-                                dialogOpen = false
-                            }
-                            .padding(12.dp))
-                }
-            }
-        }, confirmButton = {})
-    }
-
+    var expanded by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier.padding(12.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp)
     ) {
-        Text(title)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
+        )
 
-        Spacer(Modifier.height(12.dp))
+        Box {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline,
+                        RoundedCornerShape(12.dp)
+                    )
+                    .clickable { expanded = true }
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = selected ?: "Not selected",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier.rotate(if(expanded) 180f else 0f)
+                    )
+                }
+            }
 
-        Row(
-            modifier = Modifier
-                .clickable { dialogOpen = true }
-                .background(MaterialTheme.colorScheme.onBackground)
-                .padding(1.dp)
-                .background(MaterialTheme.colorScheme.background)
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(selected?: "Not selected")
-
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = "dropdown"
-            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 300.dp)
+                    .padding(horizontal = 16.dp)
+            ) {
+                items.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text(item) },
+                        onClick = {
+                            onSelect(item)
+                            expanded = false
+                        }
+                    )
+                }
+            }
         }
     }
-
 }
+
+
+@Composable
+fun ResetButton(modifier: Modifier = Modifier, onReset: () -> Unit) {
+    TextButton(onClick = onReset, modifier = modifier) {
+        Icon(
+            imageVector = Icons.Default.Refresh,
+            contentDescription = "Reset",
+        )
+        Spacer(Modifier.width(4.dp))
+        Text("Reset")
+    }
+}
+

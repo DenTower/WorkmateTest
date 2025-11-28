@@ -1,27 +1,37 @@
 package com.example.workmatetest.data.remote.dto
 
+import com.example.workmatetest.COUNTRIES
+import com.example.workmatetest.data.local.entities.UserEntity
 import com.example.workmatetest.domain.model.Contact
 import com.example.workmatetest.domain.model.Location
 import com.example.workmatetest.domain.model.Person
-import com.example.workmatetest.domain.model.User
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonPrimitive
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 @Serializable
 data class UserDto(
     val results: List<ResultsDto>
 ) {
-    fun toUser(pictureFilePath: String): User {
+    fun toUserEntity(pictureFilePath: String): UserEntity {
         val result = results.first()
-        return User(
+
+        val zdt = ZonedDateTime.parse(result.dob.date)
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val dateOfBirth = zdt.format(formatter)
+
+        val nationality = COUNTRIES.find { it.code == result.nat }?.name ?: result.nat
+
+        return UserEntity(
             person = Person(
                 firstname = result.name.first,
                 lastname = result.name.last,
                 gender = result.gender,
                 age = result.dob.age.toString(),
-                dateOfBirth = result.dob.date,
-                nationality = result.nat,
+                dateOfBirth = dateOfBirth,
+                nationality = nationality,
             ),
             contact = Contact(
                 phoneNumber = result.phone,

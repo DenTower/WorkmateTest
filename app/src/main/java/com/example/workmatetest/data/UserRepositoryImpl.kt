@@ -2,10 +2,8 @@ package com.example.workmatetest.data
 
 import android.content.Context
 import com.example.workmatetest.data.local.dao.UserDao
-import com.example.workmatetest.data.local.entities.UserEntity
 import com.example.workmatetest.data.remote.UserApi
 import com.example.workmatetest.domain.model.User
-import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.util.UUID
 
@@ -22,14 +20,22 @@ class UserRepositoryImpl(
             val pictureURL = userDto.results.first().picture.large
             val picture = api.getUserImage(url = pictureURL)
             val filePath = saveUserPicture(picture)
-            val userEntity = UserEntity(
-                user = userDto.toUser(filePath)
-            )
+            val userEntity = userDto.toUserEntity(filePath)
+
             userDao.upsertUser(userEntity)
 
             // return
-            userDto.toUser(filePath)
+            userEntity.toUser()
         }
+
+    }
+
+    override suspend fun removeUser(user: User) {
+        userDao.deleteUser(user.toUserEntity())
+    }
+
+    override suspend fun loadUsers(): List<User> {
+        return userDao.getUsers().map { it.toUser() }
     }
 
     private fun saveUserPicture(bytes: ByteArray): String {
@@ -42,9 +48,5 @@ class UserRepositoryImpl(
         file.outputStream().use { it.write(bytes) }
 
         return file.absolutePath
-    }
-
-    override suspend fun loadUsers(): List<User> {
-        return userDao.getUsers().map { it.user }
     }
 }

@@ -1,4 +1,29 @@
 package com.example.workmatetest
 
 val GENDERS = listOf("Male", "Female")
-val NATIONALITIES = listOf("AU", "BR", "CA", "CH", "DE", "DK", "ES", "FI", "FR", "GB", "IE", "IN", "IR", "MX", "NL", "NO", "NZ", "RS", "TR", "UA", "US")
+
+data class Country(val code: String, val name: String)
+
+val COUNTRIES = listOf(
+    Country("AU", "Australia",),
+    Country("BR", "Brazil",),
+    Country("CA", "Canada",),
+    Country("CH", "Switzerland",),
+    Country("DE", "Germany",),
+    Country("DK", "Denmark",),
+    Country("ES", "Spain",),
+    Country("FI", "Finland",),
+    Country("FR", "France",),
+    Country("GB", "United Kingdom"),
+    Country("IE", "Ireland",),
+    Country("IN", "India",),
+    Country("IR", "Iran",),
+    Country("MX", "Mexico",),
+    Country("NL", "Netherlands",),
+    Country("NO", "Norway",),
+    Country("NZ", "New Zealand"),
+    Country("RS", "Serbia",),
+    Country("TR", "Turkey",),
+    Country("UA", "Ukraine",),
+    Country("US", "United States"),
+)
